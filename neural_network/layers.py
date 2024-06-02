@@ -1,6 +1,7 @@
 import numpy as np
 from .neurons import Neuron
 
+
 class Layer:
     def __init__(self, input_size, output_size, activation_function):
         self.neurons = [Neuron(input_size, activation_function) for _ in range(output_size)]

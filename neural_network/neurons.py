@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Neuron:
     def __init__(self, input_size, activation_function):
         self.weights = np.random.rand(input_size)
