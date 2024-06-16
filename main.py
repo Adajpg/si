@@ -41,12 +41,12 @@ class NeuralNetworkApp(tk.Tk):
         ttk.Label(frame, text="Input Data (X)").grid(row=1, column=0, padx=5, pady=5)
         self.input_x = tk.Entry(frame)
         self.input_x.grid(row=1, column=1, padx=5, pady=5)
-        self.input_x.insert(0, "0,0; 0,1; 1,0; 1,1")
+        self.input_x.insert(0, "0.0,0.0,0.0; 0.0,0.0,1.0; 0.0,1.0,0.0; 0.0,1.0,1.0; 1.0,0.0,0.0; 1.0,0.0,1.0; 1.0,1.0,0.0; 1.0,1.0,1.0")
 
         ttk.Label(frame, text="Output Data (y)").grid(row=2, column=0, padx=5, pady=5)
         self.input_y = tk.Entry(frame)
         self.input_y.grid(row=2, column=1, padx=5, pady=5)
-        self.input_y.insert(0, "0; 1; 1; 0")
+        self.input_y.insert(0, "0.0; 0.0; 0.0; 1.0; 0.0; 1.0; 1.0; 0.0")
 
     def create_network_frame(self):
         frame = ttk.LabelFrame(self, text="Network Configuration")
@@ -101,60 +101,65 @@ class NeuralNetworkApp(tk.Tk):
         self.result_text.grid(row=0, column=0, padx=5, pady=5)
 
     def load_data(self):
-        file_path = filedialog.askopenfilename(filetypes=[("RSES Files", "*.tab"), ("All Files", "*.*")])
+        file_path = filedialog.askopenfilename(filetypes=[("RSES files", "*.tab"), ("All files", "*.*")])
         if file_path:
             X, y = RSESLoader.load(file_path)
             if X is not None and y is not None:
                 self.input_x.delete(0, tk.END)
                 self.input_y.delete(0, tk.END)
-                self.input_x.insert(0, "; ".join([", ".join(map(str, map(int, xi))) for xi in X]))
-                self.input_y.insert(0, "; ".join(map(str, map(int, y))))
+                self.input_x.insert(0, '; '.join(','.join(map(str, xi)) for xi in X))
+                self.input_y.insert(0, '; '.join(map(str, y)))
 
-                # Automatically set layers configuration based on input dimension
-                input_dim = X.shape[1]
-                output_dim = 1 if len(y.shape) == 1 else y.shape[1]
+                # Aktualizacja konfiguracji warstw
+                input_size = X.shape[1]
+                output_size = 1 if y.ndim == 1 else y.shape[1]
+                layers_config = [input_size] + [int(neurons) for neurons in self.layers_config.get().split(',')[1:-1]] + [output_size]
                 self.layers_config.delete(0, tk.END)
-                self.layers_config.insert(0, f"{input_dim},{input_dim + 2},{output_dim}")
+                self.layers_config.insert(0, ','.join(map(str, layers_config)))
 
     def train_network(self):
-        # Pobierz dane z interfejsu
-        X = np.array([list(map(int, xi.split(','))) for xi in self.input_x.get().split(';')])
-        y = np.array([list(map(int, yi.split())) for yi in self.input_y.get().split(';')])
+        try:
+            # Pobierz dane z interfejsu
+            X = np.array([list(map(float, xi.split(','))) for xi in self.input_x.get().split(';')])
+            y = np.array([list(map(float, yi.split())) for yi in self.input_y.get().split(';')])
 
-        # Pobierz konfigurację sieci
-        layers_config = list(map(int, self.layers_config.get().split(',')))
-        learning_rate = float(self.learning_rate.get())
-        max_iterations = int(self.max_iterations.get())
-        max_error = float(self.max_error.get())
-        activation_function = self.activation_function.get()
+            # Pobierz konfigurację sieci
+            layers_config = list(map(int, self.layers_config.get().split(',')))
+            learning_rate = float(self.learning_rate.get())
+            max_iterations = int(self.max_iterations.get())
+            max_error = float(self.max_error.get())
+            activation_function = self.activation_function.get()
 
-        # Stwórz i trenuj sieć neuronową
-        nn = NeuralNetwork(layers_config, learning_rate, activation_function, max_iterations, max_error)
+            # Stwórz i trenuj sieć neuronową
+            nn = NeuralNetwork(layers_config, learning_rate, activation_function, max_iterations, max_error)
 
-        errors = []
-        for iteration in range(max_iterations):
-            total_error = 0
-            for xi, target in zip(X, y):
+            errors = []
+            for iteration in range(max_iterations):
+                total_error = 0
+                for xi, target in zip(X, y):
+                    output = nn.forward(xi)
+                    total_error += nn.calculate_total_error(output, target)
+                    nn.backward(target)
+                errors.append(total_error)
+                if total_error < max_error:
+                    break
+
+            # Wyświetl wyniki
+            self.result_text.delete(1.0, tk.END)
+            for xi in X:
                 output = nn.forward(xi)
-                total_error += nn.calculate_total_error(output, target)
-                nn.backward(target)
-            errors.append(total_error)
-            if total_error < max_error:
-                print(f'Training stopped after {iteration} iterations with error: {total_error}')
-                break
+                self.result_text.insert(tk.END, f'Input: {xi}, Output: {output}\n')
 
-        # Aktualizuj wykres błędów
-        self.error_plot_ax.clear()
-        self.error_plot_ax.plot(errors)
-        self.error_plot_ax.set_xlabel('Iterations')
-        self.error_plot_ax.set_ylabel('Error')
-        self.error_plot_canvas.draw()
+            # Aktualizuj wykres błędu
+            self.error_plot_ax.clear()
+            self.error_plot_ax.plot(errors)
+            self.error_plot_ax.set_title("Training Error")
+            self.error_plot_ax.set_xlabel("Iteration")
+            self.error_plot_ax.set_ylabel("Total Error")
+            self.error_plot_canvas.draw()
 
-        # Wyświetl wyniki
-        self.result_text.delete(1.0, tk.END)
-        for xi in X:
-            output = nn.forward(xi)
-            self.result_text.insert(tk.END, f'Input: {xi}, Output: {output}\n')
+        except Exception as e:
+            messagebox.showerror("Training Error", str(e))
 
 
 if __name__ == "__main__":

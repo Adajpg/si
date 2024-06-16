@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class RSESLoader:
     @staticmethod
     def load(file_path):
@@ -7,14 +8,14 @@ class RSESLoader:
             with open(file_path, 'r') as file:
                 lines = file.readlines()
                 data = []
-                for line in lines[1:]:  # Pomijamy pierwszy wiersz z nagłówkiem
+                for line in lines:
                     line = line.strip()
-                    if line:  # Ignoruj puste wiersze
-                        values = line.split()  # Podziel wiersz na wartości oddzielone spacją lub tabulatorem
+                    if line and not line.startswith('x'):  # Ignore empty lines and header line
+                        values = line.split()
                         data.append([float(val) for val in values])
                 data = np.array(data)
-                X = data[:, :-1]  # Wszystkie kolumny oprócz ostatniej jako dane wejściowe
-                y = data[:, -1]  # Ostatnia kolumna jako wartości docelowe
+                X = data[:, :-1]  # All columns except the last as input data
+                y = data[:, -1]  # Last column as target values
                 return X, y
         except FileNotFoundError:
             print(f"File '{file_path}' not found.")
