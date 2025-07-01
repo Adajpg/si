@@ -40,15 +40,18 @@ class NeuralNetwork:
         - y (np.ndarray): Target values of shape (n_samples,).
 
         """
+        errors = []
         for iteration in range(self.max_iterations):
             total_error = 0
             for xi, target in zip(X, y):
                 output = self.forward(xi)  # Perform forward pass
                 total_error += self.calculate_total_error(output, target)  # Calculate total error
                 self.backward(target)  # Perform backward pass
+            errors.append(total_error)
             if total_error < self.max_error:
                 print(f'Training stopped after {iteration} iterations with error: {total_error}')
                 break
+        return errors
 
     def forward(self, x):
         """

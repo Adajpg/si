@@ -4,8 +4,8 @@ import numpy as np
 class Neuron:
     def __init__(self, input_size, activation_function):
         # Initialize neuron with random weights and bias.
-        self.weights = np.random.rand(input_size)  # Random weights for each input.
-        self.bias = np.random.rand()  # Random bias.
+        self.weights = np.random.uniform(-1, 1, size=input_size)
+        self.bias = np.random.uniform(-1, 1)
         self.activation_function = activation_function  # Activation function for the neuron.
 
     def activate(self, inputs):

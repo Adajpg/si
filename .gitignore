@@ -1,4 +1,6 @@
 dokumentacja.pdf
 venv/
 .idea
-__pycache__
+__pycache__/
+*.pyc
+*.pyo

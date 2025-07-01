@@ -3,8 +3,8 @@ from tkinter import ttk, filedialog, messagebox
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from neural_network import NeuralNetwork  # Import your own neural network implementation
-from neural_network.loaders.rses_loader import RSESLoader  # Import the RSESLoader
+from neural_network import NeuralNetwork
+from neural_network.loaders.rses_loader import RSESLoader
 
 
 class NeuralNetworkApp(tk.Tk):
@@ -144,10 +144,19 @@ class NeuralNetworkApp(tk.Tk):
         try:
             # Get data from GUI inputs
             X = np.array([list(map(float, xi.split(','))) for xi in self.input_x.get().split(';')])
-            y = np.array([list(map(float, yi.split())) for yi in self.input_y.get().split(';')])
+            y = np.array([[float(yi)] for yi in self.input_y.get().split(';')])
 
+            if len(X) != len(y):
+                messagebox.showerror("Data Mismatch", "Number of input samples and output targets must match.")
+                return
+            
             # Get network configuration
-            layers_config = list(map(int, self.layers_config.get().split(',')))
+            try:
+                layers_config = list(map(int, self.layers_config.get().split(',')))
+            except ValueError:
+                messagebox.showerror("Invalid input",
+                                     "Layers configuration must be a comma-separated list of integers.")
+                return
             learning_rate = float(self.learning_rate.get())
             max_iterations = int(self.max_iterations.get())
             max_error = float(self.max_error.get())
@@ -156,16 +165,7 @@ class NeuralNetworkApp(tk.Tk):
             # Create and train the neural network
             nn = NeuralNetwork(layers_config, learning_rate, activation_function, max_iterations, max_error)
 
-            errors = []
-            for iteration in range(max_iterations):
-                total_error = 0
-                for xi, target in zip(X, y):
-                    output = nn.forward(xi)
-                    total_error += nn.calculate_total_error(output, target)
-                    nn.backward(target)
-                errors.append(total_error)
-                if total_error < max_error:
-                    break
+            errors = nn.train(X, y)
 
             # Display results
             self.result_text.delete(1.0, tk.END)

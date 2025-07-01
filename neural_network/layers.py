@@ -6,7 +6,7 @@ class Layer:
     def __init__(self, input_size, output_size, activation_function):
         # Initialize the layer with neurons and output array
         self.neurons = [Neuron(input_size, activation_function) for _ in range(output_size)]
-        self.output = np.zeros(output_size)  # Initialize output array with zeros
+        self.output = np.empty(output_size)
 
     def forward(self, inputs):
         # Forward pass through the layer
