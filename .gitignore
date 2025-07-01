@@ -1,1 +1,4 @@
-venv
+dokumentacja.pdf
+venv/
+.idea
+__pycache__
