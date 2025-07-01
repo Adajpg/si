@@ -53,10 +53,6 @@ project/
 
 ---
 
-Dobrze — skoro masz już pełny `requirements.txt`, zaktualizuję sekcję instalacji w `README.md`, aby odwoływała się bezpośrednio do niego.
-
----
-
 ## 📦 Installation
 
 ### Requirements
